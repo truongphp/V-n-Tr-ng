@@ -1,0 +1,14 @@
+#!name=Locket Gold Unlock
+#!desc=Unlock Locket Premium Features & Verification Badge
+#!openUrl=https://apps.apple.com/app/locket/id1599424514
+#!author=truongphp
+#!homepage=https://github.com/truongphp/V-n-Tr-ng
+#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Apple.png
+#!system=ios
+#!tag=Unlock
+
+[Script]
+locket-unlock = type=http-response, pattern=^https?://.*locket.*api, script-path=https://raw.githubusercontent.com/truongphp/V-n-Tr-ng/main/locket.js, requires-body=true
+
+[MITM]
+hostname = %INSERT%
