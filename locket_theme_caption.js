@@ -1,113 +1,109 @@
 /**
- * Locket All-In-One Studio Theme & Overlay Modifier
- * Support: Music (Spotify), Weather, Camera Filter (Celebrity), Star Sign
- * Author: VanTruong Dev
+ * Locket Production-Grade Dynamic Overlay & Theme Modifier
+ * Target endpoints: /v1/moments, /v1/moments/*
  */
 
-let body = $request ? $request.body :$response.body;
+(function () {
+    // 1. Kiểm tra an toàn cho gói tin
+    const isRequest = typeof $request !== "undefined";
+    const rawBody = isRequest ? $request.body : $response.body;
 
-if (body) {
+    if (!rawBody) {
+        $done({});
+        return;
+    }
+
     try {
-        let obj = JSON.parse(body);
+        let obj = JSON.parse(rawBody);
 
-        function processOverlays(dataObj) {
-            if (!dataObj) return;
+        // 2. Core Handler: Xử lý đúng theo từng loại Schema
+        function processMomentData(moment) {
+            if (!moment || typeof moment !== "object") return;
 
-            // Nếu chưa có overlays, khởi tạo mảng
-            dataObj.overlays = dataObj.overlays || [];
-
-            // 1. Nếu là bài đăng có Overlay từ trước, duyệt qua từng Overlay để sửa
-            if (dataObj.overlays.length > 0) {
-                dataObj.overlays.forEach(item => {
-                    const type = item.overlay_id || item.overlay_type;
-
-                    // CASE A: Music / Spotify Overlay (caption:music)
-                    if (type.includes("music")) {
-                        item.data.text = item.data.text || "APT. - ROSÉ, Bruno Mars 🎵";
-                        item.data.text_color = "#FFFFFFE6";
-                        item.data.background = item.data.background || {};
-                        item.data.background.material_blur = "ultra_thin";
-                        item.data.background.colors = ["#864B303D", "#864B303D"];
-                    }
-
-                    // CASE B: Weather Overlay (caption:weather)
-                    else if (type.includes("weather")) {
-                        item.data.text = "18°C 🧊";
-                        item.data.text_color = "#FFFFFF";
-                        if (item.data.icon) {
-                            item.data.icon.data = "snowflake"; // Icon SF Symbol tuyết rơi
-                        }
-                        if (item.data.background) {
-                            item.data.background.colors = ["#7F00FF", "#E100FF"]; // Gradient tím neon
-                        }
-                    }
-
-                    // CASE C: Camera Filter / Celebrity Overlay (caption:filter:*)
-                    else if (type.includes("filter")) {
-                        dataObj.from_celebrity = true;
-                        item.data.text = (item.data.text || "PresLee's Nails") + " ✨";
-                        item.data.text_color = "#FFFFFF";
-                        if (item.data.background) {
-                            item.data.background.colors = ["#FF4FA3", "#FFD6E8"]; // Gradient hồng
-                        }
-                    }
-
-                    // CASE D: Star Sign / Gradient Custom (caption:star_sign)
-                    else if (type.includes("star_sign")) {
-                        item.data.text_color = "#FFFFFF";
-                        if (item.data.background) {
-                            item.data.background.colors = ["#8A2BE2", "#FF1493"]; // Gradient tím/hồng
-                        }
-                    }
-                });
-            } 
-            // 2. Nếu là bài đăng thường không có Overlay, tự bơm 1 Custom Gradient Overlay mẫu
-            else {
-                dataObj.overlays.push({
-                    "overlay_id": "caption:star_sign",
-                    "overlay_type": "caption",
-                    "alt_text": "Custom Studio Theme",
-                    "data": {
-                        "text": "VanTruong Custom Studio ✨",
-                        "type": "star_sign",
-                        "text_color": "#FFFFFF",
-                        "max_lines": {
-                            "value": "1",
-                            "@type": "type.googleapis.com/google.protobuf.Int64Value"
-                        },
-                        "background": {
-                            "colors": ["#8A2BE2", "#FF1493"],
-                            "image": {
-                                "type": "image",
-                                "data": "star_sign_background",
-                                "source": "local"
-                            }
-                        }
-                    }
-                });
+            // Đảm bảo mảng overlays tồn tại
+            if (!Array.isArray(moment.overlays) || moment.overlays.length === 0) {
+                return;
             }
+
+            moment.overlays.forEach((item) => {
+                if (!item || !item.data) return;
+
+                const overlayId = item.overlay_id || "";
+                const overlayType = item.overlay_type || "";
+
+                // === CASE 1: MUSIC / SPOTIFY OVERLAY (caption:music) ===
+                if (overlayId.includes("music") || overlayType.includes("music")) {
+                    item.data.type = "music";
+                    // Tự động giữ màu chữ & độ mờ nền mỏng ultra_thin
+                    item.data.text_color = "#FFFFFFE6";
+                    if (item.data.background) {
+                        item.data.background.material_blur = "ultra_thin";
+                        // Cho phép ghi đè dải màu mờ nếu cần
+                        item.data.background.colors = item.data.background.colors || ["#864B303D", "#864B303D"];
+                    }
+                }
+
+                // === CASE 2: WEATHER OVERLAY (caption:weather) ===
+                else if (overlayId.includes("weather") || overlayType.includes("weather")) {
+                    item.data.type = "weather";
+                    item.data.text_color = "#FFFFFF";
+
+                    // Chỉnh dải màu Gradient thời tiết (mặc định tím/hồng neon)
+                    if (item.data.background) {
+                        item.data.background.colors = ["#7F00FF", "#E100FF"];
+                    }
+
+                    // Đổi icon SF Symbol iOS
+                    if (item.data.icon) {
+                        item.data.icon.type = "sf_symbol";
+                        item.data.icon.data = "snowflake"; // Hoặc "sun.max.fill", "cloud.rain.fill"
+                        item.data.icon.color = "#FFFFFF";
+                    }
+                }
+
+                // === CASE 3: CAMERA FILTER / CELEBRITY OVERLAY (caption:filter:*) ===
+                else if (overlayId.includes("filter") || overlayType.includes("filter")) {
+                    moment.from_celebrity = true;
+                    item.data.type = "camera_filter";
+                    item.data.text_color = "#FFFFFF";
+
+                    if (item.data.background) {
+                        item.data.background.colors = ["#FF4FA3", "#FFD6E8"]; // Tông hồng Celebrity
+                    }
+                }
+
+                // === CASE 4: STAR SIGN / CUSTOM GRADIENT OVERLAY (caption:star_sign) ===
+                else if (overlayId.includes("star_sign") || overlayType.includes("star_sign")) {
+                    item.data.type = "star_sign";
+                    item.data.text_color = "#FFFFFF";
+
+                    if (item.data.background) {
+                        // Độ dải màu Gradient custom đẹp mắt
+                        item.data.background.colors = ["#8A2BE2", "#FF1493"];
+                    }
+                }
+            });
         }
 
-        // Xử lý dữ liệu nằm ở root hoặc nằm trong field `data` / `result.data`
+        // 3. Router: Điểm vào dữ liệu linh hoạt (Root, data, hoặc result.data)
         if (obj.data) {
-            processOverlays(obj.data);
+            processMomentData(obj.data);
         } else if (obj.result && Array.isArray(obj.result.data)) {
-            obj.result.data.forEach(item => processOverlays(item));
+            obj.result.data.forEach((m) => processMomentData(m));
+        } else if (Array.isArray(obj)) {
+            obj.forEach((m) => processMomentData(m));
         } else {
-            processOverlays(obj);
+            processMomentData(obj);
         }
 
-        let modifiedBody = JSON.stringify(obj);
+        // 4. Trả kết quả sạch về cho Shadowrocket
+        const finalBody = JSON.stringify(obj);
+        $done(isRequest ? { body: finalBody } : { body: finalBody });
 
-        if ($request) {$done({ body: modifiedBody });
-        } else {
-            $done({ body: modifiedBody });
-        }
-
-    } catch (e) {
-        console.log("Lỗi parse Locket All-In-One Script: " + e);
+    } catch (err) {
+        // Nếu lỗi parse JSON (do gói tin mã hoá khác), giữ nguyên gói tin gốc không làm crash App
+        console.log("Locket Script Safe Catch: " + err);
         $done({});
     }
-} else {
-    $done({});
+})();
 }
