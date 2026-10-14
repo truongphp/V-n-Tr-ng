@@ -1,5 +1,5 @@
 // Ghi đè Firebase Remote Config: Locket Gold + Full Custom Caption & Overlay Themes
-if ($response.body) {
+if ($response &&$response.body) {
     try {
         let obj = JSON.parse($response.body);
         if (!obj.entries) {
@@ -27,31 +27,47 @@ if ($response.body) {
         };
         Object.assign(obj.entries, featureFlags);
 
-        // 2. Danh sách ĐẦY ĐỦ Caption Themes & Overlay từ Database Dump
-        const fullCustomCaptions = [
-            // --- BỘ STATIC CAPTIONS (NHÃN DÁN CƠ BẢN) ---
-            { "text": "Đang Slay", "icon": { "type": "emoji", "data": "💅" }, "background": { "colors": ["#FC466B", "#3F5EFB"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Deadline dí", "icon": { "type": "emoji", "data": "🔥" }, "background": { "colors": ["#FF416C", "#FF4B2B"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Cyberpunk", "icon": { "type": "emoji", "data": "⚡" }, "background": { "colors": ["#00F2FE", "#4FACFE"] }, "max_lines": 1, "text_color": "#000000" },
-            { "text": "Rich Kid", "icon": { "type": "emoji", "data": "💸" }, "background": { "colors": ["#FFE259", "#FFA751"] }, "max_lines": 1, "text_color": "#1A1A1A" },
-            { "text": "Nhớ người yêu", "icon": { "type": "emoji", "data": "❤️" }, "background": { "colors": ["#FF5349", "#EB0C00"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Em bé", "icon": { "type": "emoji", "data": "🥺" }, "background": { "colors": ["#FFAAA6", "#FF85A2"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "2:00 AM", "icon": { "type": "emoji", "data": "🌙" }, "background": { "colors": ["#0F2027", "#203A43"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Hết nước chấm", "icon": { "type": "emoji", "data": "🤤" }, "background": { "colors": ["#56AB2F", "#A8E063"] }, "max_lines": 1, "text_color": "#000000" },
-            { "text": "Đỉnh nóc, kịch trần", "icon": { "type": "emoji", "data": "🚀" }, "background": { "colors": ["#8E2DE2", "#4A00E0"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Mãi mận, mãi keo", "icon": { "type": "emoji", "data": "✨" }, "background": { "colors": ["#FF007F", "#FF758C"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Đúng nhận, sai cãi", "icon": { "type": "emoji", "data": "🔮" }, "background": { "colors": ["#6A11CB", "#2575FC"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Ủa alo?", "icon": { "type": "emoji", "data": "📞" }, "background": { "colors": ["#F2994A", "#F2C94C"] }, "max_lines": 1, "text_color": "#000000" },
-            { "text": "Ní ơi, cứu ní!", "icon": { "type": "emoji", "data": "🆘" }, "background": { "colors": ["#FF4B2B", "#FF416C"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Ét ô ét!", "icon": { "type": "emoji", "data": "🚨" }, "background": { "colors": ["#ED213A", "#93291E"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Kiếp nạn thứ 82", "icon": { "type": "emoji", "data": "🫠" }, "background": { "colors": ["#4B6CB7", "#182E6D"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Bốc trúng xít rịt", "icon": { "type": "emoji", "data": "💩" }, "background": { "colors": ["#3A6073", "#3A7BD5"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Đi làm công ty không?", "icon": { "type": "emoji", "data": "💼" }, "background": { "colors": ["#2C3E50", "#4CA1AF"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Đọc số tài khoản đi", "icon": { "type": "emoji", "data": "💳" }, "background": { "colors": ["#11998E", "#38EF7D"] }, "max_lines": 1, "text_color": "#FFFFFF" },
-            { "text": "Còn cái nịt", "icon": { "type": "emoji", "data": "💸" }, "background": { "colors": ["#F2994A", "#F2C94C"] }, "max_lines": 1, "text_color": "#000000" },
-            { "text": "Night Vibes", "icon": { "type": "emoji", "data": "🌌" }, "background": { "colors": ["#0F2027", "#2C5364"] }, "max_lines": 1, "text_color": "#FFFFFF" },
+        // 2. Danh sách Caption đã được Chuẩn hóa Cấu trúc
+        const customCaptionsRaw = [
+            // --- BỘ STATIC CAPTIONS ---
+            { text: "Đang Slay", emoji: "💅", colors: ["#FC466B", "#3F5EFB"], textColor: "#FFFFFF" },
+            { text: "Deadline dí", emoji: "🔥", colors: ["#FF416C", "#FF4B2B"], textColor: "#FFFFFF" },
+            { text: "Cyberpunk", emoji: "⚡", colors: ["#00F2FE", "#4FACFE"], textColor: "#000000" },
+            { text: "Rich Kid", emoji: "💸", colors: ["#FFE259", "#FFA751"], textColor: "#1A1A1A" },
+            { text: "Nhớ người yêu", emoji: "❤️", colors: ["#FF5349", "#EB0C00"], textColor: "#FFFFFF" },
+            { text: "Em bé", emoji: "🥺", colors: ["#FFAAA6", "#FF85A2"], textColor: "#FFFFFF" },
+            { text: "2:00 AM", emoji: "🌙", colors: ["#0F2027", "#203A43"], textColor: "#FFFFFF" },
+            { text: "Hết nước chấm", emoji: "🤤", colors: ["#56AB2F", "#A8E063"], textColor: "#000000" },
+            { text: "Đỉnh nóc, kịch trần", emoji: "🚀", colors: ["#8E2DE2", "#4A00E0"], textColor: "#FFFFFF" },
+            { text: "Mãi mận, mãi keo", emoji: "✨", colors: ["#FF007F", "#FF758C"], textColor: "#FFFFFF" },
+            { text: "Đúng nhận, sai cãi", emoji: "🔮", colors: ["#6A11CB", "#2575FC"], textColor: "#FFFFFF" },
+            { text: "Ủa alo?", emoji: "📞", colors: ["#F2994A", "#F2C94C"], textColor: "#000000" },
+            { text: "Ní ơi, cứu ní!", emoji: "🆘", colors: ["#FF4B2B", "#FF416C"], textColor: "#FFFFFF" },
+            { text: "Ét ô ét!", emoji: "🚨", colors: ["#ED213A", "#93291E"], textColor: "#FFFFFF" },
+            { text: "Kiếp nạn thứ 82", emoji: "🫠", colors: ["#4B6CB7", "#182E6D"], textColor: "#FFFFFF" },
+            { text: "Bốc trúng xít rịt", emoji: "💩", colors: ["#3A6073", "#3A7BD5"], textColor: "#FFFFFF" },
+            { text: "Đi làm công ty không?", emoji: "💼", colors: ["#2C3E50", "#4CA1AF"], textColor: "#FFFFFF" },
+            { text: "Đọc số tài khoản đi", emoji: "💳", colors: ["#11998E", "#38EF7D"], textColor: "#FFFFFF" },
+            { text: "Còn cái nịt", emoji: "💸", colors: ["#F2994A", "#F2C94C"], textColor: "#000000" },
+            { text: "Night Vibes", emoji: "🌌", colors: ["#0F2027", "#2C5364"], textColor: "#FFFFFF" }
+        ];
 
-            // --- BỘ OVERLAY CAPTIONS CÓ ID & HIỆU ỨNG (TỪ DATABASE DUMP) ---
+        // Tự động chuyển đổi Static Captions sang đúng chuẩn Schema của Locket
+        const formattedStaticCaptions = customCaptionsRaw.map((item, idx) => ({
+            "overlay_id": `caption:custom_static_${idx}`,
+            "source": "remote",
+            "caption": {
+                "type": "static_content",
+                "max_lines": 1,
+                "text": item.text,
+                "text_color": item.textColor,
+                "icon": { "type": "emoji", "data": item.emoji },
+                "background": { "colors": item.colors }
+            }
+        }));
+
+        // Bộ Overlay Captions đặc biệt (giữ nguyên schema)
+        const overlayCaptions = [
             {
                 "overlay_id": "caption:thao_ma_lai_hay",
                 "source": "remote",
@@ -139,7 +155,7 @@ if ($response.body) {
             }
         ];
 
-        // 3. Đọc dữ liệu caption gốc từ Firebase (nếu có)
+        // 3. Đọc dữ liệu caption gốc từ Firebase
         let originalCaptions = [];
         if (obj.entries["overlay_status_captions"]) {
             try {
@@ -147,15 +163,30 @@ if ($response.body) {
             } catch (e) {}
         }
 
-        // 4. Gộp mảng caption gốc và mảng custom
-        const mergedCaptions = [...originalCaptions, ...fullCustomCaptions];
+        // 4. Gộp mảng và Lọc trùng lặp theo `overlay_id`
+        const fullCustomList = [...formattedStaticCaptions, ...overlayCaptions];
+        const captionMap = new Map();
+
+        // Đưa mảng gốc vào Map trước
+        if (Array.isArray(originalCaptions)) {
+            originalCaptions.forEach(item => {
+                if (item && item.overlay_id) captionMap.set(item.overlay_id, item);
+            });
+        }
+        // Thêm mảng Custom vào Map (ghi đè nếu trùng ID)
+        fullCustomList.forEach(item => {
+            if (item && item.overlay_id) captionMap.set(item.overlay_id, item);
+        });
+
+        const mergedCaptions = Array.from(captionMap.values());
 
         // 5. Đóng gói lại thành chuỗi JSON gán vào Firebase Remote Config
         obj.entries["overlay_status_captions"] = JSON.stringify(mergedCaptions);
 
         $done({ body: JSON.stringify(obj) });
     } catch (e) {
-        $done({});
+        // An toàn: Trả lại response gốc nếu có lỗi parse
+        $done({ body:$response.body });
     }
 } else {
     $done({});
